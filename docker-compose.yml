@@ -1,0 +1,101 @@
+services:
+  # MySQL Database
+  database:
+    image: mysql:8.0
+    container_name: crms_database
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: sem_5_project
+      MYSQL_USER: crms_user
+      MYSQL_PASSWORD: crms_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend-main/all.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - crms_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend-main
+      dockerfile: Dockerfile
+    container_name: crms_backend
+    restart: always
+    environment:
+      HOST: database
+      USER: crms_user
+      PASSWORD: crms_password
+      DATABASE: sem_5_project
+      PORT: 5555
+    ports:
+      - "5555:5555"
+    volumes:
+      - ./backend-main:/app
+      - /app/node_modules
+      - backend_uploads:/app/uploads
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - crms_network
+
+  # Police Frontend
+  frontend-police:
+    build:
+      context: ./frontend-police-main
+      dockerfile: Dockerfile
+    container_name: crms_frontend_police
+    restart: always
+    environment:
+      - REACT_APP_API_URL=http://localhost:5555
+      - PORT=3000
+      - WATCHPACK_POLLING=true
+    ports:
+      - "3002:3000"
+    volumes:
+      - ./frontend-police-main:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - crms_network
+    stdin_open: true
+    tty: true
+
+  # Public Frontend
+  frontend-public:
+    build:
+      context: ./frontend-public-main
+      dockerfile: Dockerfile
+    container_name: crms_frontend_public
+    restart: always
+    environment:
+      - REACT_APP_API_URL=http://localhost:5555
+      - PORT=3001
+      - WATCHPACK_POLLING=true
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./frontend-public-main:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - crms_network
+    stdin_open: true
+    tty: true
+
+networks:
+  crms_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  backend_uploads:

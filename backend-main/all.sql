@@ -1,4 +1,4 @@
-create database sem_5_project;
+create database if not exists sem_5_project;
 use sem_5_project;
 
 CREATE TABLE criminal_records (
