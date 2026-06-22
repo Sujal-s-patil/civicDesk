@@ -1,13 +1,13 @@
-const express=require("express");
-const publicRouter=express.Router();
-const {publicRegister,publicLogin}=require("../controllers/public.controller.js");
+import express from "express";
+const publicRouter = express.Router();
+
+const { publicRegister, publicLogin } = require("../controllers/public.controller.js");
 
 
-publicRouter.post("/register",publicRegister);
-publicRouter.post("/login",publicLogin);
+publicRouter.post("/register", publicRegister);
+publicRouter.post("/login", publicLogin);
 
-
-module.exports=publicRouter;
+export default publicRouter
 
 
 /* 

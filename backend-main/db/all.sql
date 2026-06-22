@@ -1,5 +1,5 @@
-create database if not exists sem_5_project;
-use sem_5_project;
+create database if not exists civic_desk;
+use civic_desk;
 
 CREATE TABLE criminal_records (
     criminal_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -54,6 +54,19 @@ CREATE TABLE public (
     address VARCHAR(255),
     city VARCHAR(50),
     state VARCHAR(50)
+);
+CREATE TABLE citizens (
+    id              INT AUTO_INCREMENT PRIMARY KEY,
+    photo           VARCHAR(255) DEFAULT NULL,
+    aadhar_card     BIGINT NOT NULL UNIQUE,
+    password        VARCHAR(255) NOT NULL,
+    email           VARCHAR(255) UNIQUE DEFAULT NULL,
+    phone_no        BIGINT,
+    full_name       VARCHAR(255) NOT NULL,
+    address         VARCHAR(255),
+    city            VARCHAR(50),
+    state           VARCHAR(50),
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE ticket (
     complaint_id INT AUTO_INCREMENT PRIMARY KEY,
