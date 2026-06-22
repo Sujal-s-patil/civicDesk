@@ -6,7 +6,7 @@ import config from "./config/env.js"
 const app = express();
 
 // const policeRouter = require("./routes/police.routes.js");
-// const publicRouter = require("./routes/public.routes.js");
+import citizenRouter from "./routes/citizen.js"
 // const criminalRouter = require("./routes/criminal.routes.js");
 // const ticketRouteer = require("./routes/ticket.routes.js")
 // const photoRouter = require("./routes/photo.routes.js");
@@ -20,12 +20,21 @@ app.use(express.urlencoded({ extended: false }));
 // app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // app.use("/police", policeRouter);
-app.use("/public", publicRouter);
+app.use("/citizen", citizenRouter);
 // app.use("/criminal", criminalRouter)
 // app.use("/ticket", ticketRouteer)
 // app.use("/photo", photoRouter);
 
-app.use((error, req, res) => {
+
+
+app.use((req, res, error) => {
+  return res.status(404).json({
+    success: false,
+    message: `Route ${req.originalUrl} not found`
+  })
+})
+
+app.use((error, req, res, next) => {
   const statusCode = error.statusCode || 500;
   const message = error.statusCode ? error.message : "internal server error"
   return res.status(statusCode).json({ success: false, message })

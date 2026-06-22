@@ -1,13 +1,12 @@
 import express from "express";
-const publicRouter = express.Router();
+const citizenRouter = express.Router();
 
-const { publicRegister, publicLogin } = require("../controllers/public.controller.js");
+import { citizenLogin, citizenRegister } from "../controllers/citizen.js"
 
+citizenRouter.post("/register", citizenRegister);
+citizenRouter.post("/login", citizenLogin);
 
-publicRouter.post("/register", publicRegister);
-publicRouter.post("/login", publicLogin);
-
-export default publicRouter
+export default citizenRouter
 
 
 /* 
