@@ -17,10 +17,3 @@ const registerCitizenSchema = z.object({
   city: z.string().trim().min(1, "city is required"),
   state: z.string().trim().min(1, "state is required")
 }).strict()
-
-
-export const registerCitizenSchema = z.object({
-  aadhar_card: aadharSchema,
-  password: passwordSchema,
-  phone_no: phoneSchema,
-}).strict();

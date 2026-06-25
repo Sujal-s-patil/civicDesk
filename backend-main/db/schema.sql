@@ -1,5 +1,5 @@
 -- ============================================================
--- CivicDesk Database Schema (refactored)
+-- CivicDesk Database Schema (refactored, final)
 -- ============================================================
 
 CREATE DATABASE IF NOT EXISTS civic_desk;
@@ -24,13 +24,13 @@ CREATE TABLE citizens (
 
 -- ------------------------------------------------------------
 -- police
--- id            = real surrogate PK
--- police_id     = business code (e.g. 'P001'), used for login
--- is_busy       = denormalized cache, kept in sync by app layer.
---                 TRUE means officer cannot be assigned to any
---                 new complaint until current one is Resolved.
---                 Source of truth for assignment history is the
---                 complaint_assignments table below.
+-- id            = real surrogate PK (INT)
+-- police_id     = business code e.g. 'P001', used for login
+-- is_busy       = denormalized flag, kept in sync by app layer
+--                 TRUE  → officer is actively assigned, cannot
+--                         be assigned to any new complaint
+--                 FALSE → officer is free to be assigned
+--                 Source of truth is complaint_assignments below
 -- ------------------------------------------------------------
 CREATE TABLE police (
     id              INT AUTO_INCREMENT PRIMARY KEY,
@@ -55,8 +55,8 @@ CREATE TABLE police (
 
 -- ------------------------------------------------------------
 -- complaints (renamed from `ticket`)
--- status ENUM matches the exact Kanban columns:
--- Pending -> In Progress -> Resolved
+-- Kanban stages in order: Pending → In Progress → Resolved → Closed
+-- Resolved and Closed are both terminal: officers get freed on either
 -- ------------------------------------------------------------
 CREATE TABLE complaints (
     id                  INT AUTO_INCREMENT PRIMARY KEY,
@@ -76,15 +76,16 @@ CREATE TABLE complaints (
 
 -- ------------------------------------------------------------
 -- complaint_assignments
--- Join table for the many-to-many: one complaint can have many
--- officers, one officer can (over time) have many complaints,
--- but NEVER more than one ACTIVE (released_at IS NULL) row at
--- a given moment per officer — enforced at the application/
--- transaction layer, since MySQL has no native partial unique
--- index on "released_at IS NULL".
--- Officers are released (released_at = NOW(), is_busy = FALSE)
--- when a complaint reaches either 'Resolved' or 'Closed'
--- (both are terminal statuses).
+-- Many-to-many: one complaint → many officers
+--               one officer  → many complaints (over time)
+-- But an officer can NEVER have more than one active row
+-- (released_at IS NULL) at a time — enforced in app layer
+-- via transaction: check is_busy before inserting.
+--
+-- Officer release trigger: complaint status moves to
+-- 'Resolved' OR 'Closed' → SET released_at = NOW() for all
+-- active rows on that complaint + SET police.is_busy = FALSE
+-- for each released officer. Done in a single transaction.
 -- ------------------------------------------------------------
 CREATE TABLE complaint_assignments (
     id              INT AUTO_INCREMENT PRIMARY KEY,
@@ -93,25 +94,34 @@ CREATE TABLE complaint_assignments (
     assigned_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     released_at     TIMESTAMP DEFAULT NULL,
     FOREIGN KEY (complaint_id) REFERENCES complaints(id) ON DELETE CASCADE,
-    FOREIGN KEY (police_id) REFERENCES police(id) ON DELETE CASCADE
+    FOREIGN KEY (police_id)    REFERENCES police(id)    ON DELETE CASCADE
 );
 
 -- ------------------------------------------------------------
--- complaint_evidence (renamed from `links`)
+-- complaint_evidence
+-- Both citizens (on filing) and police (from detail modal)
+-- can upload evidence.
+-- Exactly one of uploaded_by_citizen_id / uploaded_by_police_id
+-- should be set — enforced at application layer.
 -- ------------------------------------------------------------
 CREATE TABLE complaint_evidence (
-    id              INT AUTO_INCREMENT PRIMARY KEY,
-    complaint_id    INT NOT NULL,
-    uploaded_by     INT NOT NULL,
-    link            TEXT NOT NULL,
-    evidence_type   ENUM('photo','video','document') DEFAULT 'photo',
-    uploaded_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (complaint_id) REFERENCES complaints(id) ON DELETE CASCADE,
-    FOREIGN KEY (uploaded_by) REFERENCES police(id)
+    id                      INT AUTO_INCREMENT PRIMARY KEY,
+    complaint_id            INT NOT NULL,
+    uploaded_by_citizen_id  INT DEFAULT NULL,
+    uploaded_by_police_id   INT DEFAULT NULL,
+    link                    TEXT NOT NULL,
+    evidence_type           ENUM('photo','video','document') DEFAULT 'photo',
+    uploaded_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (complaint_id)           REFERENCES complaints(id) ON DELETE CASCADE,
+    FOREIGN KEY (uploaded_by_citizen_id) REFERENCES citizens(id),
+    FOREIGN KEY (uploaded_by_police_id)  REFERENCES police(id)
 );
 
 -- ------------------------------------------------------------
--- complaint_comments (replaces the old single `comment` column)
+-- complaint_comments
+-- Only police can add comments (from complaint detail modal).
+-- Replaces the old single `comment` VARCHAR column on ticket —
+-- that got overwritten; this keeps full history.
 -- ------------------------------------------------------------
 CREATE TABLE complaint_comments (
     id              INT AUTO_INCREMENT PRIMARY KEY,
@@ -120,12 +130,13 @@ CREATE TABLE complaint_comments (
     comment         TEXT NOT NULL,
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (complaint_id) REFERENCES complaints(id) ON DELETE CASCADE,
-    FOREIGN KEY (police_id) REFERENCES police(id)
+    FOREIGN KEY (police_id)    REFERENCES police(id)
 );
 
 -- ------------------------------------------------------------
--- criminal_records (read-only to police frontend — no FKs to
--- complaints since police have no CRUD over this table)
+-- criminal_records
+-- Read-only from the police frontend — no CRUD, just display.
+-- Not linked to complaints (police have no write access here).
 -- ------------------------------------------------------------
 CREATE TABLE criminal_records (
     id                  INT AUTO_INCREMENT PRIMARY KEY,
@@ -150,11 +161,17 @@ CREATE TABLE criminal_records (
 );
 
 -- ------------------------------------------------------------
--- Helpful indexes for common lookups
+-- Indexes for common query patterns
 -- ------------------------------------------------------------
-CREATE INDEX idx_complaints_status ON complaints(status);
-CREATE INDEX idx_complaints_citizen ON complaints(citizen_id);
+-- Kanban board filters by status
+CREATE INDEX idx_complaints_status      ON complaints(status);
+-- Citizen's own complaints lookup
+CREATE INDEX idx_complaints_citizen     ON complaints(citizen_id);
+-- "Is this officer currently active?" — used before every assign
 CREATE INDEX idx_assignments_police_active ON complaint_assignments(police_id, released_at);
-CREATE INDEX idx_assignments_complaint ON complaint_assignments(complaint_id);
-CREATE INDEX idx_evidence_complaint ON complaint_evidence(complaint_id);
-CREATE INDEX idx_comments_complaint ON complaint_comments(complaint_id);
+-- Fetch all officers on a complaint (for release on status change)
+CREATE INDEX idx_assignments_complaint  ON complaint_assignments(complaint_id);
+-- Fetch all evidence for a complaint detail modal
+CREATE INDEX idx_evidence_complaint     ON complaint_evidence(complaint_id);
+-- Fetch all comments for a complaint detail modal
+CREATE INDEX idx_comments_complaint     ON complaint_comments(complaint_id);
