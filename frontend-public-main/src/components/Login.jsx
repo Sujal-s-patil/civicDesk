@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../css/Login.css';
-
+import { request } from "../utils/api.js"
 const Login = () => {
   const [aadharCardNo, setAadharCardNo] = useState('');
   const [password, setPassword] = useState('');
@@ -40,18 +40,14 @@ const Login = () => {
     };
 
     try {
-      const response = await fetch(`${process.env.VITE_API_URL}/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(loginData),
-      });
 
-      const data = await response.json();
-      console.log(data)
-      if (response.ok && data.sucess) {
-        sessionStorage.setItem('userData', JSON.stringify(data));
+      const data = await request("/login", {
+        body: loginData,
+        method: "POST"
+      })
+
+      if (data.success) {
+        sessionStorage.setItem('userData', JSON.stringify(data.data));
         navigate('/home');
       } else {
         setErrorMessage(data.message || 'Login failed');
@@ -82,7 +78,7 @@ const Login = () => {
         <form onSubmit={handleLogin} autoComplete="off">
           <div>
             <input
-              type="text"
+              type="number"
               value={aadharCardNo}
               onChange={(e) => setAadharCardNo(e.target.value)}
               placeholder="Aadhar Card Number"
