@@ -7,7 +7,7 @@ const loginCitizenSchema = z.object({
 
 
 const registerCitizenSchema = z.object({
-  aadhar_card: z.string().min(12, "aadhar card no must be 10 character long"),
+  aadhar_card: z.string().length(12, "Aadhar card must be exactly 12 digits").regex(/^\d+$/, "Aadhar card must contain only digits"),
   password: z.string().min(10, "password must be 10 character long"),
   photo: z.string().trim().optional(),
   email: z.email().optional(),
