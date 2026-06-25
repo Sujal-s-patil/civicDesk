@@ -11,7 +11,7 @@ USE civic_desk;
 CREATE TABLE citizens (
     id              INT AUTO_INCREMENT PRIMARY KEY,
     photo           VARCHAR(255) DEFAULT NULL,
-    aadhar_card     BIGINT NOT NULL UNIQUE,
+    aadhar_card     VARCHAR(12) NOT NULL UNIQUE,
     password        VARCHAR(255) NOT NULL,
     email           VARCHAR(255) UNIQUE DEFAULT NULL,
     phone_no        BIGINT,

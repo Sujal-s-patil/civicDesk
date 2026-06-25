@@ -11,8 +11,19 @@ import citizenRouter from "./routes/citizen.js"
 // const ticketRouteer = require("./routes/ticket.routes.js")
 // const photoRouter = require("./routes/photo.routes.js");
 
+const allowList = ["http://localhost:5173", "http://localhost:5174"]
 // middleware
-app.use(cors());
+app.use(cors({
+  credentials: true,
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowList.includes(origin)) {
+      callback(null, true)
+    } else {
+      throw callback(new Error("not allowed by CORS"))
+    }
+  }
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
