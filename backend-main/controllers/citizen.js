@@ -5,17 +5,15 @@ import { createToken } from "../utils/jwt.js"
 
 const citizenRegister = async (req, res, next) => {
     try {
-        const data = req.body;
-        const password = data.password;
-        data.password = await bcrypt.hash(password, 10);
-
+        const { aadhar_card, password } = req.validatedData
         // Check if the user already exists based on the aadharcardno
-        const result = await findByAadhar(data.aadhar_card)
-
+        const result = await findByAadhar(aadhar_card)
         if (result) {
             throw createError("user already exist", 409)
         }
-        const responce = await insertCitizen(data)
+
+        req.validatedData.password = await bcrypt.hash(password, 10)
+        const responce = await insertCitizen(req.validatedData)
         res.status(201).json({ success: true, message: "user created successfully" });
     } catch (error) {
         next(error);
@@ -24,11 +22,11 @@ const citizenRegister = async (req, res, next) => {
 
 const citizenLogin = async (req, res, next) => {
     try {
-        const data = req.body;
-        const result = await findByAadhar(data.aadhar_card)
-        if (rows.length === 0) throw createError("user does not exist", 404)
-        const password = result.password;
-        const match = await bcrypt.compare(data.password, password)
+        const { aadhar_card, password } = req.validatedData;
+        const result = await findByAadhar(aadhar_card)
+        if (!result) throw createError("user does not exist", 404)
+
+        const match = await bcrypt.compare(password, result.password)
         if (!match) throw createError("aadharcardno or password is wrong", 401)
 
         delete result.password;
@@ -48,7 +46,7 @@ const citizenLogin = async (req, res, next) => {
         //     secure: config.NODE_ENV === "production",
         //     path: "/"
         // })
-        res.status(200).json({ success: true, message: "logged in successfully", data: rows[0] })
+        res.status(200).json({ success: true, message: "logged in successfully", data: result })
     } catch (error) {
         next(error);
     }
