@@ -136,15 +136,15 @@ const UserNav = () => {
               <div className="profile-popup-content">
                 <div className="profile-info-item">
                   <span className="profile-info-label">Name:</span>
-                  <span className="profile-info-value">{userData.fullName}</span>
+                  <span className="profile-info-value">{userData.full_name}</span>
                 </div>
                 <div className="profile-info-item">
                   <span className="profile-info-label">Aadhar No:</span>
-                  <span className="profile-info-value">{userData.aadharcardno}</span>
+                  <span className="profile-info-value">{userData.aadhar_card}</span>
                 </div>
                 <div className="profile-info-item">
                   <span className="profile-info-label">Phone No:</span>
-                  <span className="profile-info-value">{userData.phoneno}</span>
+                  <span className="profile-info-value">{userData.phone_no}</span>
                 </div>
                 <div className="profile-info-item">
                   <span className="profile-info-label">Address:</span>
