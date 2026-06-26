@@ -5,13 +5,7 @@ import { createToken } from "../utils/jwt.js"
 
 const citizenRegister = async (req, res, next) => {
     try {
-        const { aadhar_card, password } = req.validatedData
-        // Check if the user already exists based on the aadharcardno
-        const result = await findByAadhar(aadhar_card)
-        if (result) {
-            throw createError("user already exist", 409)
-        }
-
+        const { password } = req.validatedData
         req.validatedData.password = await bcrypt.hash(password, 10)
         const responce = await insertCitizen(req.validatedData)
         res.status(201).json({ success: true, message: "user created successfully" });
