@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import { insertCitizen, findByAadhar } from "../query/citizenQueries.js"
 import { createError } from "../utils/createError.js"
 import { createToken } from "../utils/jwt.js"
+import config from "../config/env.js"
 
 const citizenRegister = async (req, res, next) => {
     try {
@@ -29,17 +30,11 @@ const citizenLogin = async (req, res, next) => {
         res.cookie("token", token, {
             httpOnly: true,
             maxAge: 24 * 60 * 60 * 1000,
-            sameSite: "none",
+            sameSite: config.NODE_ENV === "production" ? "none" : "lax",
+            secure: config.NODE_ENV === "production",
             path: "/"
         })
 
-        // res.cookie("token", token, {
-        //     httpOnly: true,
-        //     maxAge: 24 * 60 * 60 * 1000,
-        //     sameSite: config.NODE_ENV === "production" ? "none" : "lax",
-        //     secure: config.NODE_ENV === "production",
-        //     path: "/"
-        // })
         res.status(200).json({ success: true, message: "logged in successfully", data: result })
     } catch (error) {
         next(error);
