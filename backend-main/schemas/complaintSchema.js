@@ -41,9 +41,30 @@ const complaintEvidenceCreateSchema = z
     { message: "Either uploaded_by_citizen_id or uploaded_by_police_id must be provided" }
   );
 
+const complaintStatusSchema = z.object({
+  complaint_id: z.number().int().positive("Complaint ID must be a positive number"),
+  status: z.enum(["Pending", "In Progress", "Resolved", "Closed"]),
+}).strict();
+
+const complaintEvidenceUploadSchema = z
+  .object({
+    complaint_id: z.coerce.number().int().positive("Complaint ID must be a positive number"),
+    uploaded_by_citizen_id: z.coerce.number().int().positive().optional().nullable(),
+    uploaded_by_police_id: z.coerce.number().int().positive().optional().nullable(),
+  })
+  .strict()
+  .refine(
+    (data) => Boolean(data.uploaded_by_citizen_id || data.uploaded_by_police_id),
+    { message: "Either uploaded_by_citizen_id or uploaded_by_police_id must be provided" }
+  );
+
+
+
 export {
   complaintCreateSchema,
   complaintCommentCreateSchema,
   complaintAssignmentCreateSchema,
   complaintEvidenceCreateSchema,
+  complaintStatusSchema,
+  complaintEvidenceUploadSchema
 };

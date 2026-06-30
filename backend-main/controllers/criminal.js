@@ -1,57 +1,46 @@
-const db = require("./sql");
+import {
+  insertCriminal,
+  getAllCriminals,
+  getCriminalById,
+  findCriminalsByName,
+} from "../query/criminalQueries.js";
+import { createError } from "../utils/createError.js";
 
-const criminalRegister = async (req, res) => {
-    const data = req.body;
-    const keys = Object.keys(data);
-    const values = Object.values(data);
-    db.query(`select * from criminal_records WHERE name='${data.name}' and aadhar_card=${data.aadhar_card}`, (error, results) => {
-        if (error) {
-            console.error(error);
-            return res.json({ error: "Error occurred while checking user existence" });
-        }
-        if (results == 0) {
-            const placeholders = keys.map(() => '?').join(',');
-            const query = `INSERT INTO criminal_records (${keys.join(',')}) VALUES (${placeholders})`;
-            db.query(query, values, (error, Results) => {
-                if (error) {
-                    console.error(error);
-                    return res.status(500).json({ error: "Error occurred while inserting user" });
-                } else { res.json({ message: "success" }); }
-            });
-        } else {
-            res.json({ message: 'already registered' });
-        }
-    })
-}
+export const criminalRegister = async (req, res, next) => {
+  try {
+    const id = await insertCriminal(req.validatedData);
+    res.status(201).json({ success: true, message: "Criminal record created successfully", id });
+  } catch (error) {
+    next(error);
+  }
+};
 
-const criminalRecords = async (req, res) => {
-    db.query(`SELECT * FROM criminal_records`, (error, results) => {
-        if (error) {
-            res.json({ error: error })
-        } else {
-            res.json(results);
-        }
-    })
-}
+export const criminalRecords = async (req, res, next) => {
+  try {
+    const rows = await getAllCriminals();
+    res.status(200).json(rows);
+  } catch (error) {
+    next(error);
+  }
+};
 
+export const getCriminal = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const record = await getCriminalById(id);
+    if (!record) throw createError("Criminal record not found", 404);
+    res.status(200).json(record);
+  } catch (error) {
+    next(error);
+  }
+};
 
-const criminal_list = async (req, res) => {
-    const data = req.body;
-    const keys = Object.keys(data);
-    const values = Object.values(data);
-    const placeholders = keys.map((key) => `${key} = ?`).join(' AND ');
-    const query = `SELECT * FROM criminal_records WHERE ${placeholders} ;`;
-    db.query(query, values, (error, results) => {
-        if (error) {
-            res.json({ error: error })
-        } else {
-            res.json(results);
-        }
-    })
-}
-
-module.exports = {
-    criminalRegister,
-    criminalRecords,
-    criminal_list
-}
+export const searchCriminals = async (req, res, next) => {
+  try {
+    const { name } = req.validatedData;
+    const rows = await findCriminalsByName(name);
+    res.status(200).json(rows);
+  } catch (error) {
+    next(error);
+  }
+};

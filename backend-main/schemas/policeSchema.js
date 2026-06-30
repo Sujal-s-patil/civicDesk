@@ -24,6 +24,15 @@ const registerSchema = z.object({
     is_busy: z.boolean().default(false)
 }).strict()
 
+const assignPoliceSchema = z.object({
+  complaint_id: z.number().int().positive("Complaint ID must be a positive number"),
+  police_id: z.number().int().positive("Police ID must be a positive number"),
+}).strict();
+
+const unassignPoliceSchema = z.object({
+  complaint_id: z.number().int().positive("Complaint ID must be a positive number"),
+}).strict();
+
 export {
-    loginSchema, registerSchema
-}
+  loginSchema, registerSchema, assignPoliceSchema, unassignPoliceSchema
+};

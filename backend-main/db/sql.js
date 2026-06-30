@@ -8,12 +8,5 @@ const db = mysql.createPool({
     database: config.DB_DATABASE
 }).promise();
 
-// db.connect(err => {
-//     if (err) {
-//         console.log("error connecting to database", err);
-//     } else {
-//         console.log("connected to database")
-//     }
-// })
 
 export default db

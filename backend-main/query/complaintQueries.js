@@ -1,26 +1,57 @@
 import db from "../db/sql.js";
 
-export function getComplaints() {
-    const [rows] = await db.query(`SELECT * FROM complaints WHERE status !='completed'`)
-    return rows
+export async function getActiveComplaints() {
+  const [rows] = await db.query(
+    `SELECT * FROM complaints WHERE status != 'Closed'`
+  );
+  return rows;
 }
 
-export function createComplaint() { 
-    
+export async function createComplaint(data) {
+  const {
+    complainant_name, citizen_id, crime_type, crime_description,
+    crime_location, city, state, crime_date, status,
+  } = data;
+
+  const [result] = await db.query(
+    `INSERT INTO complaints
+      (complainant_name, citizen_id, crime_type, crime_description, crime_location, city, state, crime_date, status)
+     VALUES (?,?,?,?,?,?,?,?,?)`,
+    [complainant_name, citizen_id, crime_type, crime_description, crime_location ?? null, city ?? null, state ?? null, crime_date, status ?? 'Pending']
+  );
+  return result.insertId;
 }
 
-// CREATE TABLE complaints (
-//     id                  INT AUTO_INCREMENT PRIMARY KEY,
-//     complainant_name    VARCHAR(100) NOT NULL,
-//     citizen_id          INT NOT NULL,
-//     crime_type          VARCHAR(50) NOT NULL,
-//     crime_description   TEXT NOT NULL,
-//     crime_location      VARCHAR(255),
-//     city                VARCHAR(50),
-//     state               VARCHAR(50),
-//     crime_date          DATE NOT NULL,
-//     status              ENUM('Pending','In Progress','Resolved','Closed') NOT NULL DEFAULT 'Pending',
-//     date_filed          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//     last_updated        TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-//     FOREIGN KEY (citizen_id) REFERENCES citizens(id)
-// );
+export async function getComplaintById(id) {
+  const [rows] = await db.query(`SELECT * FROM complaints WHERE id = ?`, [id]);
+  return rows[0] ?? null;
+}
+
+export async function getLastComplaintId() {
+  const [rows] = await db.query(`SELECT id FROM complaints ORDER BY id DESC LIMIT 1`);
+  return rows[0]?.id ?? null;
+}
+
+export async function updateComplaintStatus(complaint_id, status) {
+  const [result] = await db.query(
+    `UPDATE complaints SET status = ? WHERE id = ?`,
+    [status, complaint_id]
+  );
+  return result.affectedRows;
+}
+
+export async function addComplaintComment(complaint_id, police_id, comment) {
+  const [result] = await db.query(
+    `INSERT INTO complaint_comments (complaint_id, police_id, comment) VALUES (?,?,?)`,
+    [complaint_id, police_id, comment]
+  );
+  return result.insertId;
+}
+
+export async function getCommentsByComplaintId(complaint_id) {
+  const [rows] = await db.query(
+    `SELECT id, police_id, comment, created_at FROM complaint_comments WHERE complaint_id = ?`,
+    [complaint_id]
+  );
+  return rows;
+}
