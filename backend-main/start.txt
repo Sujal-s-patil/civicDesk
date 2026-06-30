@@ -3,3 +3,7 @@
 2)Run all.sql in mysql
 
 3) vs code Terminal : npm start
+
+dont touch citizen.js 
+use citizen.js as reference and make changes 
+convert each controller to es modules and if there are any sync code convert it to async code 

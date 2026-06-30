@@ -1,91 +1,92 @@
-const db = require("./sql");
+import {
+    getActiveComplaints,
+    createComplaint,
+    getComplaintById,
+    getLastComplaintId,
+    updateComplaintStatus,
+    addComplaintComment,
+    getCommentsByComplaintId,
+} from "../query/complaintQueries.js";
+import { releasePoliceFromComplaint } from "../query/policeQueries.js";
+import { createError } from "../utils/createError.js";
 
-const ticketRecords = async (req, res) => {
-    db.query(`SELECT * FROM ticket WHERE status !='completed'`, (error, results) => {
-        if (error) {
-            res.json(error);
-        } else {
-            res.json(results);
-        }
-    })
-}
-
-const createTicket = async (req, res) => {
-    const data = req.body;
-    const keys = Object.keys(data);
-    const values = Object.values(data);
-    const placeholder = keys.map(() => '?').join(',');
-    const query = `INSERT INTO ticket (${keys.join(',')}) VALUES (${placeholder})`;
-    db.query(query, values, (error, results) => {
-        if (error) {
-            res.json({ message: error })
-        } else {
-            res.json({ message: 'success' });
-        }
-    })
-
-}
-
-const specificTicket = async (req, res) => {
-    const data = req.body;
-    const keys = Object.keys(data);
-    const values = Object.values(data);
-    const placeholder = keys.map((key) =>` ${key}= ? `).join(' AND ');
-
-    const query = `SELECT * FROM ticket WHERE ${placeholder}`;
-
-    db.query(query, values, (error, results) => {
-        if (error) {
-            res.json(error);
-        } else {
-            res.json(results);
-        }
-    })
-}
-
-const lastComplaintId = async (req, res) => {
-    db.query(`SELECT complaint_id FROM ticket ORDER BY complaint_id DESC LIMIT 1;`, (error, results) => {
-        if (error) {
-            res.json(error);
-        } else {
-            res.json(results);
-        }
-    })
-}
-const ticketStatus = async (req, res) => {
-    const data = req.body;
-    db.query(`UPDATE ticket SET status = ? WHERE complaint_id = ?`, [data.status, data.complaint_id], (error, results) => {
-            if (error) {
-                res.json({ message: "Error updating ticket status", error });
-            } else if (results.affectedRows === 0) {
-                res.json({ message: "No ticket found with the given complaint ID" });
-            } else {
-                res.json(results);
-            }
-        }
-    );
+export const listComplaints = async (req, res, next) => {
+    try {
+        const rows = await getActiveComplaints();
+        res.status(200).json(rows);
+    } catch (error) {
+        next(error);
+    }
 };
 
-const addComment = async (req, res) => {
-    const { comment, complaint_id } = req.body;
-    db.query(`UPDATE ticket SET comment = ? WHERE complaint_id = ?`,[comment, complaint_id],(error, results) => {
-            if (error) {
-                res.json({ message: "Error adding comment", error });
-            } else if (results.affectedRows === 0) {
-                res.json({ message: "No ticket found with the given complaint ID" });
-            } else {
-                res.json({ message: "Comment added successfully", results });
-            }
-        }
-    );
+export const createComplaintHandler = async (req, res, next) => {
+    try {
+        const complaintData = {
+            ...req.validatedData,
+            complainant_name: req.user.full_name,
+            citizen_id: req.user.id,
+        };
+
+        const id = await createComplaint(complaintData);
+        res.status(201).json({ message: "Complaint created successfully", id });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getComplaint = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const complaint = await getComplaintById(id);
+        if (!complaint) throw createError("Complaint not found", 404);
+        res.status(200).json(complaint);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const lastComplaintId = async (req, res, next) => {
+    try {
+        const id = await getLastComplaintId();
+        res.status(200).json({ id });
+    } catch (error) {
+        next(error);
+    }
 };
 
 
-module.exports = {
-    ticketRecords,
-    createTicket,
-    specificTicket,
-    lastComplaintId,
-    ticketStatus,
-    addComment
-}
+export const setComplaintStatus = async (req, res, next) => {
+    try {
+        const { complaint_id, status } = req.validatedData;
+        const affected = await updateComplaintStatus(complaint_id, status);
+        if (affected === 0) throw createError("No complaint found with the given ID", 404);
+
+        if (status === "Resolved" || status === "Closed") {
+            await releasePoliceFromComplaint(complaint_id);
+        }
+
+        res.status(200).json({ message: "Status updated successfully" });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const addComment = async (req, res, next) => {
+    try {
+        const { complaint_id, police_id, comment } = req.validatedData;
+        const id = await addComplaintComment(complaint_id, police_id, comment);
+        res.status(201).json({ message: "Comment added successfully", id });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getComments = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const rows = await getCommentsByComplaintId(id);
+        res.status(200).json(rows);
+    } catch (error) {
+        next(error);
+    }
+};

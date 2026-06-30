@@ -31,4 +31,9 @@ const criminalCreateSchema = z.object({
 }).strict();
 
 
-export { criminalCreateSchema };
+// add to existing file
+const criminalSearchSchema = z.object({
+  name: z.string().trim().min(1, "Search name is required"),
+}).strict();
+
+export { criminalCreateSchema, criminalSearchSchema };

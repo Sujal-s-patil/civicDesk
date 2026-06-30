@@ -26,7 +26,7 @@ const citizenLogin = async (req, res, next) => {
 
         delete result.password;
 
-        const token = createToken(result);
+        const token = createToken({ ...result, role: "citizen" });
         res.cookie("token", token, {
             httpOnly: true,
             maxAge: 24 * 60 * 60 * 1000,
