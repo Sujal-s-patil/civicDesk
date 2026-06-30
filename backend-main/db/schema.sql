@@ -42,7 +42,7 @@ CREATE TABLE police (
     phone_no        VARCHAR(10) NOT NULL,
     email           VARCHAR(255) UNIQUE DEFAULT NULL,
     address         TEXT,
-    city            VARCHAR(255),
+    city            VARCHAR(50),
     state           VARCHAR(255),
     blood_group     VARCHAR(10) DEFAULT NULL,
     post            VARCHAR(255),
