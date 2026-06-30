@@ -11,14 +11,16 @@ function apiUrl(path) {
 
 export async function request(path, options = {}) {
     const { body, headers, ...rest } = options
+    const isFormData = typeof FormData !== "undefined" && body instanceof FormData
+
     const response = await fetch(apiUrl(path), {
         credentials: "include",
         headers: {
             Accept: "application/json",
-            ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+            ...(body === undefined ? {} : isFormData ? {} : { "Content-Type": "application/json" }),
             ...headers,
         },
-        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+        ...(body === undefined ? {} : { body: isFormData ? body : JSON.stringify(body) }),
         ...rest,
     })
 

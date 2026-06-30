@@ -8,7 +8,7 @@ export function createToken(payload) {
     })
 }
 
-export function verifyToken(token) {
+export function verifyJwtToken(token) {
     return jwt.verify(token, config.SECRET_KEY, {
         algorithm: "HS256",
     })

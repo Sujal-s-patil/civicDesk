@@ -1,4 +1,4 @@
-import { verifyToken as verifyJwtToken } from "../utils/jwt.js";
+import { verifyJwtToken } from "../utils/jwt.js";
 import { createError } from "../utils/createError.js";
 
 const getTokenFromRequest = (req) => {

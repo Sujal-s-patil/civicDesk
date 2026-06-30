@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../css/UserNav.css'; // Import the CSS file for UserNav
+import '../css/UserNav.css';
+import { clearStoredUser, getStoredUser } from '../utils/auth.js';
 
 const UserNav = () => {
   const [showProfilePopup, setShowProfilePopup] = useState(false);
@@ -8,15 +9,13 @@ const UserNav = () => {
   const profilePopupRef = useRef(null);
   const logoutConfirmationRef = useRef(null);
   const navigate = useNavigate();
+  const userData = getStoredUser();
 
-  // Function to toggle profile popup
   const toggleProfilePopup = () => {
     if (showProfilePopup) {
-      // If popup is already open, use the closing animation
       const popupElement = profilePopupRef.current;
       if (popupElement) {
         popupElement.classList.add('closing');
-
         setTimeout(() => {
           setShowProfilePopup(false);
         }, 300);
@@ -24,17 +23,14 @@ const UserNav = () => {
         setShowProfilePopup(false);
       }
     } else {
-      // If popup is closed, simply open it
       setShowProfilePopup(true);
     }
   };
 
-  // Function to close profile popup
   const closeProfilePopup = () => {
     const popupElement = profilePopupRef.current;
     if (popupElement) {
       popupElement.classList.add('closing');
-
       setTimeout(() => {
         setShowProfilePopup(false);
       }, 300);
@@ -43,30 +39,24 @@ const UserNav = () => {
     }
   };
 
-  // Function to show logout confirmation
   const showLogoutConfirmationPopup = () => {
     setShowLogoutConfirmation(true);
   };
 
-  // Function to cancel logout
   const cancelLogout = () => {
     setShowLogoutConfirmation(false);
   };
 
-  // Function to handle logout
   const handleLogout = () => {
-    sessionStorage.removeItem('userData');
+    clearStoredUser();
     navigate('/');
   };
 
-  // Effect to handle clicks outside the profile popup
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (profilePopupRef.current && !profilePopupRef.current.contains(event.target) &&
-        !event.target.closest('.profile-circle')) {
+      if (profilePopupRef.current && !profilePopupRef.current.contains(event.target) && !event.target.closest('.profile-circle')) {
         const popupElement = profilePopupRef.current;
         popupElement.classList.add('closing');
-
         setTimeout(() => {
           setShowProfilePopup(false);
         }, 300);
@@ -82,11 +72,9 @@ const UserNav = () => {
     };
   }, [showProfilePopup]);
 
-  // Effect to handle clicks outside the logout confirmation popup
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (logoutConfirmationRef.current && !logoutConfirmationRef.current.contains(event.target) &&
-        !event.target.closest('.logout-button')) {
+      if (logoutConfirmationRef.current && !logoutConfirmationRef.current.contains(event.target) && !event.target.closest('.logout-button')) {
         setShowLogoutConfirmation(false);
       }
     };
@@ -100,30 +88,20 @@ const UserNav = () => {
     };
   }, [showLogoutConfirmation]);
 
-  // Mock user data (in a real app, this would come from an API or context)
-  const storedUserData = sessionStorage.getItem('userData');
-  const userData = JSON.parse(storedUserData);
-
-
   return (
     <>
       <div className="user-profile-container">
         <div className="user-profile">
           <div className="profile-circle" onClick={toggleProfilePopup}>
             <div className="profile-content">
-              {userData.photo ? (
-                <img
-                  src={userData.photo}
-                  alt={userData.full_name || userData.name}
-                  className="profile-photo"
-                />
+              {userData?.photo ? (
+                <img src={userData.photo} alt={userData.full_name || 'Profile'} className="profile-photo" />
               ) : (
-                
-              <svg className="profile-icon" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-              </svg>
+                <svg className="profile-icon" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                </svg>
               )}
-              
+
               <span className="profile-text">Profile</span>
             </div>
           </div>
@@ -136,19 +114,19 @@ const UserNav = () => {
               <div className="profile-popup-content">
                 <div className="profile-info-item">
                   <span className="profile-info-label">Name:</span>
-                  <span className="profile-info-value">{userData.full_name}</span>
+                  <span className="profile-info-value">{userData?.full_name || 'N/A'}</span>
                 </div>
                 <div className="profile-info-item">
                   <span className="profile-info-label">Aadhar No:</span>
-                  <span className="profile-info-value">{userData.aadhar_card}</span>
+                  <span className="profile-info-value">{userData?.aadhar_card || 'N/A'}</span>
                 </div>
                 <div className="profile-info-item">
                   <span className="profile-info-label">Phone No:</span>
-                  <span className="profile-info-value">{userData.phone_no}</span>
+                  <span className="profile-info-value">{userData?.phone_no || 'N/A'}</span>
                 </div>
                 <div className="profile-info-item">
                   <span className="profile-info-label">Address:</span>
-                  <span className="profile-info-value">{userData.address},{userData.city},{userData.state}</span>
+                  <span className="profile-info-value">{[userData?.address, userData?.city, userData?.state].filter(Boolean).join(', ')}</span>
                 </div>
               </div>
             </div>

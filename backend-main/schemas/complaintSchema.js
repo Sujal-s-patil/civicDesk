@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 const complaintCreateSchema = z.object({
-  complainant_name: z.string().trim().min(1, "Complainant name is required").max(100),
-  citizen_id: z.number().int().positive("Citizen ID must be a positive number"),
+  complainant_name: z.string().trim().max(100).optional(),
+  citizen_id: z.number().int().positive("Citizen ID must be a positive number").optional(),
   crime_type: z.string().trim().min(1, "Crime type is required").max(50),
   crime_description: z.string().trim().min(1, "Crime description is required"),
   crime_location: z.string().trim().min(1).optional().nullable(),
@@ -52,11 +52,7 @@ const complaintEvidenceUploadSchema = z
     uploaded_by_citizen_id: z.coerce.number().int().positive().optional().nullable(),
     uploaded_by_police_id: z.coerce.number().int().positive().optional().nullable(),
   })
-  .strict()
-  .refine(
-    (data) => Boolean(data.uploaded_by_citizen_id || data.uploaded_by_police_id),
-    { message: "Either uploaded_by_citizen_id or uploaded_by_police_id must be provided" }
-  );
+  .strict();
 
 
 

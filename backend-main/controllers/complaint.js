@@ -2,6 +2,7 @@ import {
     getActiveComplaints,
     createComplaint,
     getComplaintById,
+    getComplaintsByCitizenId,
     getLastComplaintId,
     updateComplaintStatus,
     addComplaintComment,
@@ -40,6 +41,15 @@ export const getComplaint = async (req, res, next) => {
         const complaint = await getComplaintById(id);
         if (!complaint) throw createError("Complaint not found", 404);
         res.status(200).json(complaint);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getCitizenComplaints = async (req, res, next) => {
+    try {
+        const complaints = await getComplaintsByCitizenId(req.user.id);
+        res.status(200).json(complaints);
     } catch (error) {
         next(error);
     }

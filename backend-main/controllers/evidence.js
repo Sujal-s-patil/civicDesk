@@ -20,10 +20,10 @@ export const uploadSinglePhoto = (req, res, next) => {
 // complaint_id comes from validatedData (already Zod-checked upstream via route).
 export const uploadComplaintEvidence = async (req, res, next) => {
   try {
-    const { complaint_id } = req.validatedData;
+    const { complaint_id, uploaded_by_citizen_id: providedCitizenId, uploaded_by_police_id: providedPoliceId } = req.validatedData;
 
-    const uploaded_by_citizen_id = req.user?.role === "citizen" ? req.user.id : null;
-    const uploaded_by_police_id = req.user?.role === "police" ? req.user.id : null;
+    const uploaded_by_citizen_id = req.user?.role === "citizen" ? req.user.id : providedCitizenId ?? null;
+    const uploaded_by_police_id = req.user?.role === "police" ? req.user.id : providedPoliceId ?? null;
 
     if (!req.files || req.files.length === 0) {
       throw createError("At least one evidence file is required", 400);

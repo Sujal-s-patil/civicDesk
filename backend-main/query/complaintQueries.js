@@ -27,6 +27,14 @@ export async function getComplaintById(id) {
   return rows[0] ?? null;
 }
 
+export async function getComplaintsByCitizenId(citizenId) {
+  const [rows] = await db.query(
+    `SELECT * FROM complaints WHERE citizen_id = ? ORDER BY id DESC`,
+    [citizenId]
+  );
+  return rows;
+}
+
 export async function getLastComplaintId() {
   const [rows] = await db.query(`SELECT id FROM complaints ORDER BY id DESC LIMIT 1`);
   return rows[0]?.id ?? null;

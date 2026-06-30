@@ -4,6 +4,7 @@ import {
   listComplaints,
   createComplaintHandler,
   getComplaint,
+  getCitizenComplaints,
   lastComplaintId,
   setComplaintStatus,
   addComment,
@@ -24,6 +25,7 @@ import { verifyToken, requireRole } from "../middlewares/auth.js";
 const complaintRouter = express.Router();
 
 complaintRouter.get("/get", verifyToken, requireRole("police"), listComplaints);
+complaintRouter.get("/mine", verifyToken, requireRole("citizen"), getCitizenComplaints);
 complaintRouter.get("/last", verifyToken, requireRole("citizen", "police"), lastComplaintId);
 complaintRouter.get("/:id", verifyToken, requireRole("citizen", "police"), getComplaint);
 complaintRouter.post("/create", verifyToken, requireRole("citizen"), validateSchema(complaintCreateSchema), createComplaintHandler);
