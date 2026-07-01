@@ -1,8 +1,9 @@
 import bcrypt from "bcrypt";
+import config from "../config/env.js"
 import { insertCitizen, findByAadhar } from "../query/citizenQueries.js"
 import { createError } from "../utils/createError.js"
 import { createToken } from "../utils/jwt.js"
-import config from "../config/env.js"
+import setAuthCookie from "../utils/cookie.js";
 
 const citizenRegister = async (req, res, next) => {
     try {
@@ -27,13 +28,7 @@ const citizenLogin = async (req, res, next) => {
         delete result.password;
 
         const token = createToken({ ...result, role: "citizen" });
-        res.cookie("token", token, {
-            httpOnly: true,
-            maxAge: 24 * 60 * 60 * 1000,
-            sameSite: config.NODE_ENV === "production" ? "none" : "lax",
-            secure: config.NODE_ENV === "production",
-            path: "/"
-        })
+        setAuthCookie(res, token)
 
         res.status(200).json({ success: true, message: "logged in successfully", data: result })
     } catch (error) {

@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import config from "../config/env.js";
 import {
   insertPolice,
   findByPoliceId,
@@ -9,7 +10,7 @@ import {
 } from "../query/policeQueries.js";
 import { createError } from "../utils/createError.js";
 import { createToken } from "../utils/jwt.js";
-import config from "../config/env.js";
+import setAuthCookie from "../utils/cookie.js";
 
 export const policeRegister = async (req, res, next) => {
   try {
@@ -34,13 +35,7 @@ export const policeLogin = async (req, res, next) => {
     delete officer.password;
 
     const token = createToken({ ...officer, role: "police" });
-    res.cookie("token", token, {
-      httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000,
-      sameSite: config.NODE_ENV === "production" ? "none" : "lax",
-      secure: config.NODE_ENV === "production",
-      path: "/",
-    });
+    setAuthCookie(res, token)
 
     res.status(200).json({ success: true, message: "Logged in successfully", data: officer });
   } catch (error) {
